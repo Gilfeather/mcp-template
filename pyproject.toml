@@ -1,0 +1,18 @@
+[project]
+name = "company-api-mcp"
+version = "0.1.0"
+description = "FastMCP server template for company API integration"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "httpx>=0.28.1",
+    "mcp[cli]>=1.10.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/your-company/company-api-mcp"
+Repository = "https://github.com/your-company/company-api-mcp"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
