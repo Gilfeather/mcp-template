@@ -8,6 +8,9 @@ This template provides a starting point for building MCP servers that can intera
 
 - Authentication handling (Bearer token)
 - Error handling and logging
+- In-memory caching for improved performance
+- Full CRUD operations (Create, Read, Update, Delete)
+- Health check and status monitoring
 - Example tools for common API operations
 - Environment variable configuration
 - Proper async/await patterns
@@ -24,6 +27,7 @@ This template provides a starting point for building MCP servers that can intera
    ```bash
    export API_BASE_URL="https://your-api.example.com"
    export API_KEY="your-api-key-here"
+   export CACHE_TTL="300"  # Optional: cache TTL in seconds
    ```
 
 ## Configuration
@@ -32,6 +36,7 @@ The server can be configured using environment variables:
 
 - `API_BASE_URL`: Base URL of your company's API
 - `API_KEY`: API key for authentication
+- `CACHE_TTL`: Cache time-to-live in seconds (default: 300)
 
 ## Usage
 
@@ -43,10 +48,14 @@ python server.py
 
 ### Available Tools
 
-The template includes two example tools:
+The template includes six example tools:
 
 1. **get_user_info(user_id)**: Retrieve user information by ID
 2. **search_items(query, limit)**: Search for items with optional limit
+3. **create_item(title, description)**: Create a new item
+4. **update_item(item_id, title, description)**: Update an existing item
+5. **delete_item(item_id)**: Delete an item
+6. **get_api_status()**: Check API health and status
 
 ### Customization
 
@@ -59,6 +68,7 @@ To adapt this template for your API:
 
 ## Example Tools Implementation
 
+### Basic Tool Template
 ```python
 @mcp.tool()
 async def your_custom_tool(param: str) -> str:
@@ -74,6 +84,38 @@ async def your_custom_tool(param: str) -> str:
     
     # Format and return your data
     return formatted_response
+```
+
+### CRUD Operations Examples
+
+```python
+# Create
+@mcp.tool()
+async def create_resource(name: str, data: str) -> str:
+    json_data = {"name": name, "data": data}
+    result = await make_api_request("resources", method="POST", json_data=json_data)
+    return format_response(result)
+
+# Read
+@mcp.tool()
+async def get_resource(resource_id: str) -> str:
+    result = await make_api_request(f"resources/{resource_id}")
+    return format_response(result)
+
+# Update
+@mcp.tool()
+async def update_resource(resource_id: str, name: str = None) -> str:
+    json_data = {}
+    if name:
+        json_data["name"] = name
+    result = await make_api_request(f"resources/{resource_id}", method="PUT", json_data=json_data)
+    return format_response(result)
+
+# Delete
+@mcp.tool()
+async def delete_resource(resource_id: str) -> str:
+    result = await make_api_request(f"resources/{resource_id}", method="DELETE")
+    return format_response(result)
 ```
 
 ## MCP Integration
@@ -94,6 +136,25 @@ To use this server with an MCP client, add it to your MCP configuration:
   }
 }
 ```
+
+## Features
+
+### Caching
+The server includes an in-memory cache to improve performance and reduce API calls. Cache entries expire after the configured TTL (default: 5 minutes).
+
+### Error Handling
+Comprehensive error handling for:
+- HTTP status errors
+- Network timeouts
+- JSON parsing errors
+- API authentication failures
+
+### Flexible HTTP Methods
+Support for all common HTTP methods:
+- GET: Retrieve data
+- POST: Create new resources
+- PUT: Update existing resources
+- DELETE: Remove resources
 
 ## Development
 
