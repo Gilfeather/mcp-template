@@ -1,8 +1,16 @@
 import os
 import time
+import logging
 from typing import Any, Optional
 import httpx
 from mcp.server.fastmcp import FastMCP
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Initialize FastMCP server
 mcp = FastMCP("company-api")
@@ -15,6 +23,11 @@ CACHE_TTL = int(os.getenv("CACHE_TTL", "300"))  # 5 minutes default
 
 # Simple in-memory cache
 _cache = {}
+
+# Rate limiting
+_rate_limit_requests = []
+RATE_LIMIT_REQUESTS = int(os.getenv("RATE_LIMIT_REQUESTS", "100"))  # requests per minute
+RATE_LIMIT_WINDOW = 60  # seconds
 
 def get_cache_key(endpoint: str, params: dict = None) -> str:
     """Generate a cache key for the request."""
@@ -35,13 +48,41 @@ def set_cache(cache_key: str, data: dict) -> None:
     """Store data in cache with timestamp."""
     _cache[cache_key] = (data, time.time())
 
+def check_rate_limit() -> bool:
+    """Check if we're within rate limits."""
+    current_time = time.time()
+    
+    # Remove old requests outside the window
+    global _rate_limit_requests
+    _rate_limit_requests = [
+        req_time for req_time in _rate_limit_requests 
+        if current_time - req_time < RATE_LIMIT_WINDOW
+    ]
+    
+    # Check if we're at the limit
+    if len(_rate_limit_requests) >= RATE_LIMIT_REQUESTS:
+        return False
+    
+    # Add current request
+    _rate_limit_requests.append(current_time)
+    return True
+
 async def make_api_request(
     endpoint: str, 
     method: str = "GET", 
     params: dict = None, 
-    json_data: dict = None
+    json_data: dict = None,
+    use_cache: bool = True
 ) -> dict[str, Any] | None:
     """Make a request to your company API with proper error handling."""
+    # Check cache for GET requests
+    if method == "GET" and use_cache:
+        cache_key = get_cache_key(endpoint, params)
+        cached_data = get_from_cache(cache_key)
+        if cached_data:
+            logger.info(f"Cache hit for {endpoint}")
+            return cached_data
+    
     headers = {
         "User-Agent": USER_AGENT,
         "Authorization": f"Bearer {API_KEY}",
@@ -49,7 +90,13 @@ async def make_api_request(
         "Content-Type": "application/json"
     }
     
+    # Check rate limit
+    if not check_rate_limit():
+        logger.warning("Rate limit exceeded")
+        return {"error": "Rate limit exceeded. Please try again later."}
+    
     url = f"{API_BASE_URL}/{endpoint.lstrip('/')}"
+    logger.info(f"Making {method} request to {url}")
     
     async with httpx.AsyncClient() as client:
         try:
@@ -65,13 +112,26 @@ async def make_api_request(
             
             # Handle empty responses
             if response.status_code == 204 or not response.content:
-                return {"success": True, "message": "Operation completed successfully"}
+                result = {"success": True, "message": "Operation completed successfully"}
+            else:
+                result = response.json()
             
-            return response.json()
+            # Cache successful GET requests
+            if method == "GET" and use_cache and result:
+                cache_key = get_cache_key(endpoint, params)
+                set_cache(cache_key, result)
+                logger.info(f"Cached response for {endpoint}")
+            
+            return result
+            
         except httpx.HTTPStatusError as e:
-            return {"error": f"HTTP {e.response.status_code}: {e.response.text}"}
+            error_msg = f"HTTP {e.response.status_code}: {e.response.text}"
+            logger.error(f"HTTP error for {url}: {error_msg}")
+            return {"error": error_msg}
         except Exception as e:
-            return {"error": f"Request failed: {str(e)}"}
+            error_msg = f"Request failed: {str(e)}"
+            logger.error(f"Request error for {url}: {error_msg}")
+            return {"error": error_msg}
 
 @mcp.tool()
 async def get_user_info(user_id: str) -> str:

@@ -7,10 +7,14 @@ A template for creating Model Context Protocol (MCP) servers that integrate with
 This template provides a starting point for building MCP servers that can interact with your company's REST API. It includes:
 
 - Authentication handling (Bearer token)
-- Error handling and logging
+- Comprehensive error handling and logging
 - In-memory caching for improved performance
+- Rate limiting to prevent API abuse
 - Full CRUD operations (Create, Read, Update, Delete)
 - Health check and status monitoring
+- Docker support for easy deployment
+- Comprehensive test suite
+- CI/CD pipeline with GitHub Actions
 - Example tools for common API operations
 - Environment variable configuration
 - Proper async/await patterns
@@ -28,7 +32,23 @@ This template provides a starting point for building MCP servers that can intera
    export API_BASE_URL="https://your-api.example.com"
    export API_KEY="your-api-key-here"
    export CACHE_TTL="300"  # Optional: cache TTL in seconds
+   export RATE_LIMIT_REQUESTS="100"  # Optional: rate limit
    ```
+
+### Docker Setup
+
+Alternatively, use Docker:
+
+```bash
+# Build and run with docker-compose
+docker-compose up --build
+
+# Or build and run manually
+docker build -t company-api-mcp .
+docker run -e API_BASE_URL="https://your-api.example.com" \
+           -e API_KEY="your-api-key" \
+           company-api-mcp
+```
 
 ## Configuration
 
@@ -37,6 +57,7 @@ The server can be configured using environment variables:
 - `API_BASE_URL`: Base URL of your company's API
 - `API_KEY`: API key for authentication
 - `CACHE_TTL`: Cache time-to-live in seconds (default: 300)
+- `RATE_LIMIT_REQUESTS`: Maximum requests per minute (default: 100)
 
 ## Usage
 
@@ -142,16 +163,27 @@ To use this server with an MCP client, add it to your MCP configuration:
 ### Caching
 The server includes an in-memory cache to improve performance and reduce API calls. Cache entries expire after the configured TTL (default: 5 minutes).
 
+### Rate Limiting
+Built-in rate limiting prevents API abuse by limiting the number of requests per minute (default: 100 requests/minute).
+
+### Logging
+Comprehensive logging for debugging and monitoring:
+- Request/response logging
+- Cache hit/miss logging
+- Error logging with details
+- Rate limit warnings
+
 ### Error Handling
 Comprehensive error handling for:
 - HTTP status errors
 - Network timeouts
 - JSON parsing errors
 - API authentication failures
+- Rate limit exceeded
 
 ### Flexible HTTP Methods
 Support for all common HTTP methods:
-- GET: Retrieve data
+- GET: Retrieve data (with caching)
 - POST: Create new resources
 - PUT: Update existing resources
 - DELETE: Remove resources
@@ -175,6 +207,37 @@ Support for all common HTTP methods:
 2. Use `make_api_request()` to call your API
 3. Handle errors appropriately
 4. Format the response for the user
+
+### Testing
+
+Run the test suite:
+
+```bash
+# Install development dependencies
+pip install -e ".[dev]"
+
+# Run tests
+pytest
+
+# Run tests with coverage
+pytest --cov=. --cov-report=html
+
+# Run specific test file
+pytest tests/test_server.py -v
+```
+
+### Code Quality
+
+```bash
+# Lint code
+ruff check .
+
+# Type checking
+mypy server.py
+
+# Format code
+ruff format .
+```
 
 ## License
 

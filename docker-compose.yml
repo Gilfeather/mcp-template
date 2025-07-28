@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  mcp-server:
+    build: .
+    environment:
+      - API_BASE_URL=${API_BASE_URL:-https://api.example.com}
+      - API_KEY=${API_KEY:-your-api-key-here}
+      - CACHE_TTL=${CACHE_TTL:-300}
+      - RATE_LIMIT_REQUESTS=${RATE_LIMIT_REQUESTS:-100}
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    
+  # Optional: Add a reverse proxy if needed
+  # nginx:
+  #   image: nginx:alpine
+  #   ports:
+  #     - "80:80"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf
+  #   depends_on:
+  #     - mcp-server
