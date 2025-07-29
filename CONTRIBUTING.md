@@ -17,10 +17,13 @@ Thank you for your interest in contributing to this project!
    ```
 4. Install dependencies:
    ```bash
-   pip install -e .
-   pip install pytest pytest-asyncio flake8 bandit safety
+   make install-dev
    ```
 5. Copy `.env.example` to `.env` and configure your API settings
+6. Set up pre-commit hooks:
+   ```bash
+   pre-commit install
+   ```
 
 ## Pull Request Workflow
 
@@ -35,8 +38,11 @@ Thank you for your interest in contributing to this project!
 
 3. Test your changes:
    ```bash
-   # Run linting
-   flake8 . --max-line-length=127
+   # Run all checks
+   make check
+   
+   # Run tests
+   make test
    
    # Test imports
    python -c "import server; print('Success')"
@@ -71,23 +77,26 @@ We follow conventional commits:
 
 ## Code Style
 
-- Follow PEP 8 for Python code
+- Follow PEP 8 for Python code (enforced by ruff)
 - Use type hints where appropriate
 - Add docstrings for all functions and classes
 - Keep functions focused and small
-- Maximum line length: 127 characters
+- Use ruff for linting and formatting
+- Run `make check` before submitting PRs
+- Maximum line length: 88 characters (enforced by ruff)
 - Use meaningful variable and function names
 
 ## Testing Guidelines
 
 Before submitting a pull request:
 
-1. Ensure all imports work correctly
-2. Test the MCP server with a mock API if possible
-3. Verify all tools work as expected
-4. Check error handling scenarios
-5. Run security checks with bandit
-6. Ensure no new linting errors
+1. Run `make check` to ensure code quality
+2. Run `make test` to verify all tests pass
+3. Ensure all imports work correctly
+4. Test the MCP server with a mock API if possible
+5. Verify all tools work as expected
+6. Check error handling scenarios
+7. Run `pre-commit run --all-files` to check hooks
 
 ## Documentation
 

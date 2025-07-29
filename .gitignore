@@ -26,3 +26,9 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Ruff cache
+.ruff_cache/
+
+# Pre-commit
+.pre-commit-cache/

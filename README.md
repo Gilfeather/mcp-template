@@ -24,7 +24,11 @@ This template provides a starting point for building MCP servers that can intera
 1. Clone this repository
 2. Install dependencies:
    ```bash
+   # Production dependencies
    pip install -e .
+   
+   # Or with development dependencies
+   make install-dev
    ```
 
 3. Set environment variables:
@@ -228,15 +232,36 @@ pytest tests/test_server.py -v
 
 ### Code Quality
 
+Using ruff for linting and formatting:
+
+```bash
+# Install development dependencies
+make install-dev
+
+# Run all checks
+make check
+
+# Fix linting issues automatically
+make fix
+
+# Run individual tools
+make lint      # Check for issues
+make format    # Format code
+make test      # Run tests
+make test-cov  # Run tests with coverage
+```
+
+Or run commands directly:
+
 ```bash
 # Lint code
 ruff check .
 
-# Type checking
-mypy server.py
-
 # Format code
 ruff format .
+
+# Type checking
+mypy server.py --ignore-missing-imports
 ```
 
 ## License
